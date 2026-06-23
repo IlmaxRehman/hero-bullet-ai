@@ -8,7 +8,7 @@ export default function Hero() {
       </h1>
 
       <p className="mt-4 text-xl text-slate-600">
-        Craft recruiter-ready resume bullets with AI
+        Generate recruiter-ready resume bullets in seconds
       </p>
 
     </div>
