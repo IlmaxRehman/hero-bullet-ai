@@ -1,17 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import google.generativeai as genai
 from dotenv import load_dotenv
+from groq import Groq
 import os
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+client = Groq(
+    api_key=os.getenv("GROQ_API_KEY")
+)
 
-model = genai.GenerativeModel("gemini-1.5-flash")
-
-app = FastAPI()
+app = FastAPI(
+    title="BulletCraft AI API",
+    description="Generate ATS-friendly resume bullet points using AI",
+    version="1.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,24 +29,61 @@ class ResumeRequest(BaseModel):
     project_description: str
     role: str
 
+
+@app.get("/")
+def root():
+    return {
+        "message": "BulletCraft AI Backend Running"
+    }
+
+
 @app.post("/generate")
 def generate_bullets(data: ResumeRequest):
-    prompt = f"""
-    You are an expert resume writer.
 
-    Convert the project description into exactly 4 ATS-friendly resume bullet points.
+    try:
+        prompt = f"""
+You are an expert technical resume writer.
 
-    Requirements:
-    - Start each bullet with a strong action verb.
-    - Focus on technical impact.
-    - Use professional resume language.
-    - Tailor bullets for a {data.role}.
-    - Return only bullet points.
+Generate exactly 4 ATS-friendly resume bullet points.
 
-    Project Description:
-    {data.project_description}
-    """ 
+Target Role:
+{data.role}
 
-    response = model.generate_content(prompt)
+Requirements:
+- Start each bullet with a strong action verb.
+- Focus on technical impact.
+- Use professional resume language.
+- Mention technologies when relevant.
+- DO NOT invent percentages, metrics, statistics, or achievements.
+- Only use information present in the project description.
+- Return ONLY bullet points.
+- No numbering.
 
-    return {"bullets": response.text}
+Project Description:
+{data.project_description}
+"""
+
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7,
+        )
+
+        bullets = completion.choices[0].message.content
+
+        return {
+            "success": True,
+            "bullets": bullets
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "bullets": ""
+        }
