@@ -16,7 +16,7 @@ export default function Benefits() {
           AI Powered
         </h3>
         <p className="text-slate-500 mt-2">
-          Uses Gemini AI to improve wording and impact.
+          Uses AI to convert project descriptions into ATS-friendly resume bullet points.
         </p>
       </div>
 
